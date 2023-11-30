@@ -22,13 +22,19 @@ const UserSchema = new mongoose.Schema(
       required: true,
       unique: true,
     },
+    address: {
+      type: String,
+    },
+    country: {
+      type: String,
+    },
+    zip: {
+      type: String,
+    },
+
     image: {
-      type: [
-        {
-          public_id: { type: String },
-          url: { type: String },
-        },
-      ],
+      public_id: { type: String },
+      url: { type: String },
     },
     isAdmin: {
       type: Boolean,

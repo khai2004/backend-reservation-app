@@ -18,7 +18,7 @@ const register = asyncHandler(async (req, res) => {
     res.status(201).json({
       _id: user._id,
       email: user.email,
-      name: user.username,
+      username: user.username,
       country: user.country,
       phone: user.phone,
       isAdmin: user.isAdmin,
@@ -62,7 +62,7 @@ const logoutUser = asyncHandler(async (req, res) => {
 });
 
 const getUsers = asyncHandler(async (req, res) => {
-  const user = await User.find({});
+  const user = await User.find();
   res.status(200).json({ user });
 });
 
@@ -80,18 +80,34 @@ const getUser = asyncHandler(async (req, res) => {
     throw new Error('Something wrong. Please try again! ');
   }
 });
-const updatUser = asyncHandler(async (req, res) => {
-  res.send('update');
+const updateUser = asyncHandler(async (req, res) => {
+  const updateUser = await User.findByIdAndUpdate(req.params.id, req.body, {
+    new: true,
+  });
+  if (updateUser) {
+    res.status(201).json(updateUser);
+  } else {
+    res.status(400);
+    throw new Error('Something wrong. Please try again! ');
+  }
 });
 const deleteUser = asyncHandler(async (req, res) => {
-  res.send('deleteUser');
+  const deleteUser = await User.findByIdAndDelete(req.params.id, req.body, {
+    new: true,
+  });
+  if (deleteUser) {
+    res.status(201).json('Delete success!');
+  } else {
+    res.status(400);
+    throw new Error('Something wrong. Please try again! ');
+  }
 });
 export {
   register,
   getUsers,
   authUser,
   logoutUser,
-  updatUser,
+  updateUser,
   getUser,
   deleteUser,
 };

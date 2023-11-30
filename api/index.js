@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import authRoute from './routes/user.route.js';
 import hotelRoute from './routes/hotel.route.js';
 import romeRoute from './routes/room.route.js';
+import orderRoute from './routes/order.route.js';
 import cookieParser from 'cookie-parser';
 import { notFound, errorHandler } from './middleware/errorMiddleware.js';
 import cors from 'cors';
@@ -27,6 +28,7 @@ app.use(cookieParser());
 app.use('/api', authRoute);
 app.use('/api/hotels', hotelRoute);
 app.use('/api/rooms', romeRoute);
+app.use('/api/orders', orderRoute);
 
 app.use(notFound);
 app.use(errorHandler);

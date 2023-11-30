@@ -1,5 +1,33 @@
 import mongoose from 'mongoose';
 
+const reviewSchema = new mongoose.Schema(
+  {
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      required: true,
+      ref: 'User',
+    },
+    username: {
+      type: String,
+      required: true,
+    },
+    image: {
+      type: String,
+    },
+    rating: {
+      type: Number,
+      required: true,
+    },
+    comment: {
+      type: String,
+      required: true,
+    },
+  },
+  {
+    timestamps: true,
+  }
+);
+
 const HotelSchema = new mongoose.Schema(
   {
     title: {
@@ -39,6 +67,12 @@ const HotelSchema = new mongoose.Schema(
     distance: {
       type: String,
       required: true,
+    },
+    reviews: [reviewSchema],
+    numReviews: {
+      type: String,
+      required: true,
+      default: 0,
     },
     rating: {
       type: Number,

@@ -1,5 +1,6 @@
 import asyncHandler from '../middleware/asyncHandler.js';
 import Hotel from '../models/Hotel.js';
+import Order from '../models/Order.js';
 import Room from '../models/Room.js';
 
 import { v2 as cloudinary } from 'cloudinary';
@@ -14,10 +15,7 @@ cloudinary.config({
 });
 
 export const getHotels = asyncHandler(async (req, res) => {
-  const count = await Hotel.countDocuments({});
-  const pageSize = Number(req.query.pageSize) || 5;
-
-  const totalPage = Math.ceil(count / pageSize);
+  const pageSize = Number(req.query.pageSize) || 10;
   const page = Number(req.query.pageNumber) || 1;
   const skip = (page - 1) * pageSize || 0;
   const filter = {};
@@ -49,8 +47,10 @@ export const getHotels = asyncHandler(async (req, res) => {
     .limit(pageSize)
     .sort({ cheapestPrice: price });
 
+  const count = hotels.length;
+
   if (hotels) {
-    res.status(200).json({ hotels, totalPage: totalPage });
+    res.status(200).json({ hotels, count: count });
   } else {
     res.status(400);
     throw new Error('Something wrong');
@@ -124,36 +124,54 @@ export const getTopHotels = asyncHandler(async (req, res) => {
 });
 
 export const getHotelsRating = asyncHandler(async (req, res) => {
-  const rating = [];
+  console.log(req.query.city);
+  const citySearch = new RegExp(req.query.city, 'i');
+  const hotels = await Hotel.find({ city: citySearch });
 
-  for (let i = 1; i < 6; i++) {
-    const count = await Hotel.countDocuments({
-      rating: { $gte: Number(i), $lt: Number(i + 1) },
-    });
-    rating.push(count);
-  }
-  if (rating) {
-    res.status(200).json(rating);
-  } else {
-    res.status(400);
-    throw new Error('Something wrong');
-  }
-});
+  const typeNumber = {
+    hotel: 0,
+    apartment: 0,
+    resort: 0,
+    villas: 0,
+    cabins: 0,
+  };
+  hotels.map((type) => {
+    if (type.type === 'hotel') {
+      typeNumber.hotel++;
+    } else if (type.type === 'apartment') {
+      typeNumber.apartment++;
+    } else if (type.type === 'resort') {
+      typeNumber.resort++;
+    } else if (type.type === 'cabins') {
+      typeNumber.cabins++;
+    } else if (type.type === 'villas') {
+      typeNumber.villas++;
+    }
+  });
+  const ratingNumber = {
+    star1: 0,
+    star2: 0,
+    star3: 0,
+    star4: 0,
+    star5: 0,
+  };
+  hotels.map((rating) => {
+    if (rating.rating >= 1 && rating.rating < 2) {
+      ratingNumber.star1++;
+    } else if (rating.rating >= 2 && rating.rating < 3) {
+      ratingNumber.star2++;
+    } else if (rating.rating >= 3 && rating.rating < 4) {
+      ratingNumber.star3++;
+    } else if (rating.rating >= 4 && rating.rating < 5) {
+      ratingNumber.star4++;
+    } else if (rating.rating === 5) {
+      ratingNumber.star5++;
+    }
+  });
+  if (hotels && typeNumber && ratingNumber) {
+    console.log(typeNumber, ratingNumber);
 
-export const getHotelType = asyncHandler(async (req, res) => {
-  const pipeline = [
-    {
-      $group: {
-        _id: '$type',
-        count: { $sum: 1 },
-      },
-    },
-  ];
-
-  const result = await Hotel.aggregate(pipeline);
-
-  if (result) {
-    res.status(200).json(result);
+    res.status(200).json({ hotels, typeNumber, ratingNumber });
   } else {
     res.status(400);
     throw new Error('Something wrong');
@@ -173,5 +191,50 @@ export const getHotelRooms = asyncHandler(async (req, res) => {
   } else {
     res.status(400);
     throw new Error('Something went wrong');
+  }
+});
+
+export const createHotelReview = asyncHandler(async (req, res) => {
+  const { rating, comment } = req.body;
+  const hotel = await Hotel.findById(req.params.id);
+  const orders = await Order.find({ hotel: new Object(req.params.id) });
+  if (hotel && orders) {
+    const alreadyReviewed = hotel.reviews.find(
+      (review) => review.user.toString() === req.user._id.toString()
+    );
+    const alreadyOrder = orders.find(
+      (order) => order.user.toString() === req.user._id.toString()
+    );
+    if (alreadyReviewed) {
+      res.status(400);
+      throw new Error('You already reviewed');
+    }
+    if (!alreadyOrder) {
+      res.status(400);
+      throw new Error('Please, check-in before review!');
+    }
+    const review = {
+      username: req.user.username,
+      rating: Number(rating),
+      comment,
+      user: req.user._id,
+      image: req.user.image.public_id,
+    };
+
+    hotel.reviews.push(review);
+    hotel.numReviews = hotel.reviews.length;
+    hotel.rating = Number(
+      (
+        hotel.reviews.reduce((acc, review) => acc + review.rating, 0) /
+        hotel.reviews.length
+      ).toFixed(1)
+    );
+
+    await hotel.save();
+
+    res.status(200).json({ message: 'Review added' });
+  } else {
+    res.status(404);
+    throw new Error('Resource not found');
   }
 });

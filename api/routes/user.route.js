@@ -4,7 +4,7 @@ import {
   authUser,
   getUser,
   getUsers,
-  updatUser,
+  updateUser,
   deleteUser,
   logoutUser,
 } from '../controllers/user.js';
@@ -18,8 +18,8 @@ router.post('/logout', logoutUser);
 router.get('/users', protect, admin, getUsers);
 router
   .route('/users/:id')
-  .get(protect, getUser)
-  .put(protect, updatUser)
-  .delete(protect, deleteUser);
+  .patch(protect, updateUser)
+  .delete(protect, deleteUser)
+  .get(protect, getUser);
 
 export default router;

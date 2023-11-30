@@ -11,7 +11,7 @@ const router = express.Router();
 
 router.route('/room/:id').put(protect, admin, updateRoom).get(getSingleRoom);
 
-router.put('/availability/:id', protect, admin, updateRoomAvailability);
+router.put('/availability/:id', protect, updateRoomAvailability);
 
 router.delete('/room/:id/:hotelid', protect, admin, deleteRoom);
 
