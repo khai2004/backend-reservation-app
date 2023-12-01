@@ -90,7 +90,6 @@ export const deleteHotel = asyncHandler(async (req, res) => {
 
   if (!imageId.length === 0) {
     const result = await cloudinary.api.delete_resources(imageId);
-    console.log(result);
   }
 
   const singelHotel = await Hotel.findByIdAndDelete(req.params.id);
